@@ -78,26 +78,8 @@ class ContractGeneratorApp(ctk.CTk):
         header.grid(row=0, column=0, sticky="ew", padx=34, pady=(28, 18))
         header.grid_columnconfigure(0, weight=1)
 
-        brand = ctk.CTkFrame(
-            header,
-            fg_color=COLORS["yellow"],
-            corner_radius=16,
-            width=54,
-            height=54,
-        )
-        brand.grid(row=0, column=0, sticky="w")
-        brand.grid_propagate(False)
-
-        brand_label = ctk.CTkLabel(
-            brand,
-            text="e",
-            text_color="#111111",
-            font=("Segoe UI", 25, "bold"),
-        )
-        brand_label.place(relx=0.5, rely=0.48, anchor="center")
-
         title_stack = ctk.CTkFrame(header, fg_color="transparent")
-        title_stack.grid(row=0, column=0, sticky="ew", padx=(72, 0))
+        title_stack.grid(row=0, column=0, sticky="ew")
         title_stack.grid_columnconfigure(0, weight=1)
 
         title = ctk.CTkLabel(
@@ -289,19 +271,7 @@ class ContractGeneratorApp(ctk.CTk):
             border_color=COLORS["line"],
         )
         card.grid(row=index, column=0, sticky="ew", padx=10, pady=(0, 12))
-        card.grid_columnconfigure(1, weight=1)
-
-        number = ctk.CTkLabel(
-            card,
-            text=f"{index + 1:02d}",
-            text_color="#111111",
-            fg_color=COLORS["yellow"],
-            corner_radius=12,
-            font=("Segoe UI", 11, "bold"),
-            width=42,
-            height=32,
-        )
-        number.grid(row=0, column=0, sticky="nw", padx=(16, 12), pady=16)
+        card.grid_columnconfigure(0, weight=1)
 
         label_text = field["label"] or field["technical_name"]
         label = ctk.CTkLabel(
@@ -311,7 +281,7 @@ class ContractGeneratorApp(ctk.CTk):
             font=("Segoe UI", 13, "bold"),
             anchor="w",
         )
-        label.grid(row=0, column=1, sticky="ew", padx=(0, 16), pady=(14, 0))
+        label.grid(row=0, column=0, sticky="ew", padx=16, pady=(14, 0))
 
         entry = ctk.CTkEntry(
             card,
@@ -324,7 +294,7 @@ class ContractGeneratorApp(ctk.CTk):
             placeholder_text_color=COLORS["muted"],
             font=("Segoe UI", 13),
         )
-        entry.grid(row=1, column=1, sticky="ew", padx=(0, 16), pady=(8, 0))
+        entry.grid(row=1, column=0, sticky="ew", padx=16, pady=(8, 0))
         entry.insert(0, field["default"])
 
         helper_parts = []
@@ -343,7 +313,7 @@ class ContractGeneratorApp(ctk.CTk):
             justify="left",
             wraplength=610,
         )
-        helper.grid(row=2, column=1, sticky="ew", padx=(0, 16), pady=(6, 16))
+        helper.grid(row=2, column=0, sticky="ew", padx=16, pady=(6, 16))
 
         self.entries[field["technical_name"]] = entry
 
