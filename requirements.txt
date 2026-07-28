@@ -1,3 +1,4 @@
 docxtpl
 openpyxl
 pyinstaller
+customtkinter

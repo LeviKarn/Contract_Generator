@@ -5,26 +5,27 @@ import sys
 import tkinter as tk
 from tkinter import messagebox
 
+import customtkinter as ctk
+
 from generator import OUTPUT_DIR, open_folder, read_field_definitions, render_contract
 
 
 APP_TITLE = "Contract Generator"
 
 COLORS = {
-    "background": "#eef2f6",
-    "surface": "#ffffff",
-    "surface_alt": "#f8fafc",
-    "border": "#d8e0ea",
-    "text": "#142033",
-    "muted": "#667085",
-    "primary": "#0f766e",
-    "primary_hover": "#115e59",
-    "primary_pressed": "#134e4a",
-    "accent": "#2563eb",
-    "accent_soft": "#e8f0ff",
-    "danger": "#b42318",
-    "success_soft": "#ecfdf3",
-    "success_text": "#027a48",
+    "bg": "#0b0b0f",
+    "panel": "#15161b",
+    "panel_alt": "#1d1f26",
+    "input": "#101116",
+    "input_hover": "#181a20",
+    "yellow": "#ffd21f",
+    "yellow_hover": "#e7bd12",
+    "yellow_pressed": "#cfa80c",
+    "text": "#f6f4ea",
+    "muted": "#aaa99f",
+    "line": "#2b2d35",
+    "danger": "#ff6b5f",
+    "success": "#85e89d",
 }
 
 
@@ -46,43 +47,16 @@ def open_file(path):
     subprocess.run(["xdg-open", str(path)], check=False)
 
 
-class HoverButton(tk.Button):
-    def __init__(self, master, normal_bg, hover_bg, pressed_bg=None, **kwargs):
-        super().__init__(
-            master,
-            bg=normal_bg,
-            activebackground=pressed_bg or hover_bg,
-            relief="flat",
-            bd=0,
-            highlightthickness=0,
-            cursor="hand2",
-            **kwargs,
-        )
-        self.normal_bg = normal_bg
-        self.hover_bg = hover_bg
-        self.pressed_bg = pressed_bg or hover_bg
-        self.bind("<Enter>", self._on_enter)
-        self.bind("<Leave>", self._on_leave)
-        self.bind("<ButtonPress-1>", self._on_press)
-        self.bind("<ButtonRelease-1>", self._on_enter)
-
-    def _on_enter(self, _event=None):
-        self.configure(bg=self.hover_bg)
-
-    def _on_leave(self, _event=None):
-        self.configure(bg=self.normal_bg)
-
-    def _on_press(self, _event=None):
-        self.configure(bg=self.pressed_bg)
-
-
-class ContractGeneratorApp(tk.Tk):
+class ContractGeneratorApp(ctk.CTk):
     def __init__(self):
         super().__init__()
+        ctk.set_appearance_mode("dark")
+        ctk.set_default_color_theme("dark-blue")
+
         self.title(APP_TITLE)
-        self.geometry("760x760")
-        self.minsize(620, 560)
-        self.configure(bg=COLORS["background"])
+        self.geometry("820x780")
+        self.minsize(680, 600)
+        self.configure(fg_color=COLORS["bg"])
 
         self.status_var = tk.StringVar(value="Bereit.")
         self.fields = []
@@ -92,218 +66,188 @@ class ContractGeneratorApp(tk.Tk):
         self._load_fields()
 
     def _build_ui(self):
-        self.columnconfigure(0, weight=1)
-        self.rowconfigure(1, weight=1)
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_rowconfigure(1, weight=1)
 
-        header = tk.Frame(self, bg=COLORS["background"], padx=32, pady=26)
-        header.grid(row=0, column=0, sticky="ew")
-        header.columnconfigure(0, weight=1)
+        self._build_header()
+        self._build_form_panel()
+        self._build_footer()
 
-        title_row = tk.Frame(header, bg=COLORS["background"])
-        title_row.grid(row=0, column=0, sticky="ew")
-        title_row.columnconfigure(0, weight=1)
+    def _build_header(self):
+        header = ctk.CTkFrame(self, fg_color="transparent")
+        header.grid(row=0, column=0, sticky="ew", padx=34, pady=(28, 18))
+        header.grid_columnconfigure(0, weight=1)
 
-        title = tk.Label(
-            title_row,
+        brand = ctk.CTkFrame(
+            header,
+            fg_color=COLORS["yellow"],
+            corner_radius=16,
+            width=54,
+            height=54,
+        )
+        brand.grid(row=0, column=0, sticky="w")
+        brand.grid_propagate(False)
+
+        brand_label = ctk.CTkLabel(
+            brand,
+            text="e",
+            text_color="#111111",
+            font=("Segoe UI", 25, "bold"),
+        )
+        brand_label.place(relx=0.5, rely=0.48, anchor="center")
+
+        title_stack = ctk.CTkFrame(header, fg_color="transparent")
+        title_stack.grid(row=0, column=0, sticky="ew", padx=(72, 0))
+        title_stack.grid_columnconfigure(0, weight=1)
+
+        title = ctk.CTkLabel(
+            title_stack,
             text="Vertragsgenerator",
-            bg=COLORS["background"],
-            fg=COLORS["text"],
-            font=("Segoe UI", 22, "bold"),
+            text_color=COLORS["text"],
+            font=("Segoe UI", 28, "bold"),
             anchor="w",
         )
         title.grid(row=0, column=0, sticky="ew")
 
-        badge = tk.Label(
-            title_row,
-            text="Windows App",
-            bg=COLORS["accent_soft"],
-            fg=COLORS["accent"],
-            font=("Segoe UI", 9, "bold"),
-            padx=10,
-            pady=5,
+        subtitle = ctk.CTkLabel(
+            title_stack,
+            text="Schnell erfassen. Sauber erzeugen. Direkt im Output-Ordner abholen.",
+            text_color=COLORS["muted"],
+            font=("Segoe UI", 12),
+            anchor="w",
+        )
+        subtitle.grid(row=1, column=0, sticky="ew", pady=(4, 0))
+
+        badge = ctk.CTkLabel(
+            header,
+            text="encentive",
+            text_color=COLORS["yellow"],
+            fg_color=COLORS["panel_alt"],
+            corner_radius=999,
+            font=("Segoe UI", 11, "bold"),
+            padx=14,
+            pady=7,
         )
         badge.grid(row=0, column=1, sticky="e")
 
-        subtitle = tk.Label(
-            header,
-            text="Vertragsdaten direkt im Tool erfassen. Der fertige Vertrag landet automatisch im Output-Ordner.",
-            bg=COLORS["background"],
-            fg=COLORS["muted"],
-            font=("Segoe UI", 10),
-            anchor="w",
-            justify="left",
-        )
-        subtitle.grid(row=1, column=0, sticky="ew", pady=(8, 0))
+    def _build_form_panel(self):
+        shell = ctk.CTkFrame(self, fg_color="transparent")
+        shell.grid(row=1, column=0, sticky="nsew", padx=34)
+        shell.grid_columnconfigure(0, weight=1)
+        shell.grid_rowconfigure(0, weight=1)
 
-        form_shell = tk.Frame(self, bg=COLORS["background"], padx=32)
-        form_shell.grid(row=1, column=0, sticky="nsew")
-        form_shell.columnconfigure(0, weight=1)
-        form_shell.rowconfigure(0, weight=1)
-
-        panel = tk.Frame(
-            form_shell,
-            bg=COLORS["surface"],
-            highlightthickness=1,
-            highlightbackground=COLORS["border"],
+        panel = ctk.CTkFrame(
+            shell,
+            fg_color=COLORS["panel"],
+            corner_radius=24,
+            border_width=1,
+            border_color=COLORS["line"],
         )
         panel.grid(row=0, column=0, sticky="nsew")
-        panel.columnconfigure(0, weight=1)
-        panel.rowconfigure(1, weight=1)
+        panel.grid_columnconfigure(0, weight=1)
+        panel.grid_rowconfigure(1, weight=1)
 
-        panel_header = tk.Frame(panel, bg=COLORS["surface"], padx=20, pady=16)
-        panel_header.grid(row=0, column=0, sticky="ew")
-        panel_header.columnconfigure(0, weight=1)
+        panel_header = ctk.CTkFrame(panel, fg_color="transparent")
+        panel_header.grid(row=0, column=0, sticky="ew", padx=22, pady=(20, 12))
+        panel_header.grid_columnconfigure(0, weight=1)
 
-        panel_title = tk.Label(
+        panel_title = ctk.CTkLabel(
             panel_header,
             text="Vertragsdaten",
-            bg=COLORS["surface"],
-            fg=COLORS["text"],
-            font=("Segoe UI", 12, "bold"),
+            text_color=COLORS["text"],
+            font=("Segoe UI", 16, "bold"),
             anchor="w",
         )
         panel_title.grid(row=0, column=0, sticky="ew")
 
-        self.field_count_label = tk.Label(
+        self.field_count_label = ctk.CTkLabel(
             panel_header,
             text="",
-            bg=COLORS["surface_alt"],
-            fg=COLORS["muted"],
-            font=("Segoe UI", 9),
-            padx=10,
-            pady=5,
+            text_color=COLORS["yellow"],
+            fg_color=COLORS["input"],
+            corner_radius=999,
+            font=("Segoe UI", 11, "bold"),
+            padx=12,
+            pady=6,
         )
         self.field_count_label.grid(row=0, column=1, sticky="e")
 
-        scroll_area = tk.Frame(panel, bg=COLORS["surface"])
-        scroll_area.grid(row=1, column=0, sticky="nsew")
-        scroll_area.columnconfigure(0, weight=1)
-        scroll_area.rowconfigure(0, weight=1)
-
-        self.canvas = tk.Canvas(
-            scroll_area,
-            bg=COLORS["surface"],
-            highlightthickness=0,
-            bd=0,
+        self.form_frame = ctk.CTkScrollableFrame(
+            panel,
+            fg_color="transparent",
+            scrollbar_button_color="#343741",
+            scrollbar_button_hover_color=COLORS["yellow"],
+            corner_radius=0,
         )
-        scrollbar = tk.Scrollbar(
-            scroll_area,
-            orient="vertical",
-            command=self.canvas.yview,
-            width=14,
-            bd=0,
-            highlightthickness=0,
-        )
-        self.form_frame = tk.Frame(self.canvas, bg=COLORS["surface"], padx=20, pady=4)
+        self.form_frame.grid(row=1, column=0, sticky="nsew", padx=10, pady=(0, 14))
+        self.form_frame.grid_columnconfigure(0, weight=1)
 
-        self.form_window = self.canvas.create_window(
-            (0, 0),
-            window=self.form_frame,
-            anchor="nw",
-        )
-        self.canvas.configure(yscrollcommand=scrollbar.set)
+    def _build_footer(self):
+        footer = ctk.CTkFrame(self, fg_color="transparent")
+        footer.grid(row=2, column=0, sticky="ew", padx=34, pady=(18, 28))
+        footer.grid_columnconfigure(0, weight=2)
+        footer.grid_columnconfigure(1, weight=1)
+        footer.grid_columnconfigure(2, weight=1)
 
-        self.canvas.grid(row=0, column=0, sticky="nsew")
-        scrollbar.grid(row=0, column=1, sticky="ns")
-
-        self.form_frame.bind("<Configure>", self._sync_scroll_region)
-        self.canvas.bind("<Configure>", self._sync_form_width)
-        self._bind_mousewheel(self.canvas)
-
-        footer = tk.Frame(self, bg=COLORS["background"], padx=32, pady=20)
-        footer.grid(row=2, column=0, sticky="ew")
-        footer.columnconfigure(0, weight=2)
-        footer.columnconfigure(1, weight=1)
-        footer.columnconfigure(2, weight=1)
-
-        primary = HoverButton(
+        primary = ctk.CTkButton(
             footer,
-            normal_bg=COLORS["primary"],
-            hover_bg=COLORS["primary_hover"],
-            pressed_bg=COLORS["primary_pressed"],
             text="Vertrag erzeugen",
             command=self.generate_from_form,
-            fg="white",
-            activeforeground="white",
-            font=("Segoe UI", 11, "bold"),
-            padx=16,
-            pady=12,
+            height=48,
+            corner_radius=18,
+            fg_color=COLORS["yellow"],
+            hover_color=COLORS["yellow_hover"],
+            text_color="#111111",
+            font=("Segoe UI", 13, "bold"),
         )
         primary.grid(row=0, column=0, sticky="ew", padx=(0, 10))
 
-        secondary_style = {
-            "fg": COLORS["text"],
-            "activeforeground": COLORS["text"],
-            "font": ("Segoe UI", 10),
-            "padx": 12,
-            "pady": 12,
-        }
-
-        HoverButton(
+        output_button = ctk.CTkButton(
             footer,
-            normal_bg=COLORS["surface"],
-            hover_bg="#eef4fb",
-            pressed_bg="#e3ebf5",
-            text="Output oeffnen",
+            text="Output öffnen",
             command=self.open_output,
-            **secondary_style,
-        ).grid(row=0, column=1, sticky="ew", padx=10)
+            height=48,
+            corner_radius=18,
+            fg_color=COLORS["panel_alt"],
+            hover_color="#282b33",
+            text_color=COLORS["text"],
+            font=("Segoe UI", 12, "bold"),
+        )
+        output_button.grid(row=0, column=1, sticky="ew", padx=10)
 
-        HoverButton(
+        reload_button = ctk.CTkButton(
             footer,
-            normal_bg=COLORS["surface"],
-            hover_bg="#eef4fb",
-            pressed_bg="#e3ebf5",
             text="Felder neu laden",
             command=self.reload_fields,
-            **secondary_style,
-        ).grid(row=0, column=2, sticky="ew", padx=(10, 0))
+            height=48,
+            corner_radius=18,
+            fg_color=COLORS["panel_alt"],
+            hover_color="#282b33",
+            text_color=COLORS["text"],
+            font=("Segoe UI", 12, "bold"),
+        )
+        reload_button.grid(row=0, column=2, sticky="ew", padx=(10, 0))
 
-        self.status_label = tk.Label(
+        status_shell = ctk.CTkFrame(
             footer,
+            fg_color=COLORS["panel"],
+            corner_radius=16,
+            border_width=1,
+            border_color=COLORS["line"],
+        )
+        status_shell.grid(row=1, column=0, columnspan=3, sticky="ew", pady=(14, 0))
+        status_shell.grid_columnconfigure(0, weight=1)
+
+        self.status_label = ctk.CTkLabel(
+            status_shell,
             textvariable=self.status_var,
-            bg=COLORS["surface_alt"],
-            fg=COLORS["muted"],
-            font=("Segoe UI", 10),
+            text_color=COLORS["muted"],
+            font=("Segoe UI", 11),
             anchor="w",
             padx=14,
-            pady=11,
-            wraplength=680,
-            justify="left",
+            pady=12,
         )
-        self.status_label.grid(row=1, column=0, columnspan=3, sticky="ew", pady=(14, 0))
-
-    def _bind_mousewheel(self, widget):
-        widget.bind("<Enter>", lambda _event: self._activate_mousewheel())
-        widget.bind("<Leave>", lambda _event: self._deactivate_mousewheel())
-
-    def _activate_mousewheel(self):
-        self.bind_all("<MouseWheel>", self._on_mousewheel)
-        self.bind_all("<Button-4>", self._on_mousewheel)
-        self.bind_all("<Button-5>", self._on_mousewheel)
-
-    def _deactivate_mousewheel(self):
-        self.unbind_all("<MouseWheel>")
-        self.unbind_all("<Button-4>")
-        self.unbind_all("<Button-5>")
-
-    def _on_mousewheel(self, event):
-        if getattr(event, "num", None) == 4:
-            self.canvas.yview_scroll(-3, "units")
-            return
-
-        if getattr(event, "num", None) == 5:
-            self.canvas.yview_scroll(3, "units")
-            return
-
-        delta = int(-1 * (event.delta / 120))
-        self.canvas.yview_scroll(delta * 3, "units")
-
-    def _sync_scroll_region(self, _event=None):
-        self.canvas.configure(scrollregion=self.canvas.bbox("all"))
-
-    def _sync_form_width(self, event):
-        self.canvas.itemconfigure(self.form_window, width=event.width)
+        self.status_label.grid(row=0, column=0, sticky="ew")
 
     def _load_fields(self):
         try:
@@ -324,60 +268,63 @@ class ContractGeneratorApp(tk.Tk):
         self.entries = {}
 
         if not self.fields:
-            tk.Label(
+            empty = ctk.CTkLabel(
                 self.form_frame,
                 text="Keine Felder gefunden.",
-                bg=COLORS["surface"],
-                fg=COLORS["muted"],
-                font=("Segoe UI", 10),
-                anchor="w",
-            ).pack(fill="x", pady=20)
+                text_color=COLORS["muted"],
+                font=("Segoe UI", 12),
+            )
+            empty.grid(row=0, column=0, sticky="ew", pady=24)
             return
 
         for index, field in enumerate(self.fields):
             self._render_field(index, field)
 
     def _render_field(self, index, field):
-        row = tk.Frame(self.form_frame, bg=COLORS["surface"])
-        row.pack(fill="x", pady=(0, 18))
-        row.columnconfigure(1, weight=1)
-
-        number = tk.Label(
-            row,
-            text=f"{index + 1:02d}",
-            bg=COLORS["surface_alt"],
-            fg=COLORS["accent"],
-            font=("Segoe UI", 9, "bold"),
-            width=4,
-            padx=6,
-            pady=7,
+        card = ctk.CTkFrame(
+            self.form_frame,
+            fg_color=COLORS["panel_alt"],
+            corner_radius=20,
+            border_width=1,
+            border_color=COLORS["line"],
         )
-        number.grid(row=0, column=0, rowspan=3, sticky="n", padx=(0, 12), pady=(1, 0))
+        card.grid(row=index, column=0, sticky="ew", padx=10, pady=(0, 12))
+        card.grid_columnconfigure(1, weight=1)
+
+        number = ctk.CTkLabel(
+            card,
+            text=f"{index + 1:02d}",
+            text_color="#111111",
+            fg_color=COLORS["yellow"],
+            corner_radius=12,
+            font=("Segoe UI", 11, "bold"),
+            width=42,
+            height=32,
+        )
+        number.grid(row=0, column=0, sticky="nw", padx=(16, 12), pady=16)
 
         label_text = field["label"] or field["technical_name"]
-        label = tk.Label(
-            row,
+        label = ctk.CTkLabel(
+            card,
             text=label_text,
-            bg=COLORS["surface"],
-            fg=COLORS["text"],
-            font=("Segoe UI", 10, "bold"),
+            text_color=COLORS["text"],
+            font=("Segoe UI", 13, "bold"),
             anchor="w",
         )
-        label.grid(row=0, column=1, sticky="ew")
+        label.grid(row=0, column=1, sticky="ew", padx=(0, 16), pady=(14, 0))
 
-        entry = tk.Entry(
-            row,
-            bg=COLORS["surface_alt"],
-            fg=COLORS["text"],
-            insertbackground=COLORS["text"],
-            font=("Segoe UI", 11),
-            relief="flat",
-            bd=0,
-            highlightthickness=1,
-            highlightbackground=COLORS["border"],
-            highlightcolor=COLORS["accent"],
+        entry = ctk.CTkEntry(
+            card,
+            height=42,
+            corner_radius=14,
+            fg_color=COLORS["input"],
+            border_color="#3a3d46",
+            border_width=1,
+            text_color=COLORS["text"],
+            placeholder_text_color=COLORS["muted"],
+            font=("Segoe UI", 13),
         )
-        entry.grid(row=1, column=1, sticky="ew", ipady=9, pady=(6, 0))
+        entry.grid(row=1, column=1, sticky="ew", padx=(0, 16), pady=(8, 0))
         entry.insert(0, field["default"])
 
         helper_parts = []
@@ -386,34 +333,22 @@ class ContractGeneratorApp(tk.Tk):
         if field["hint"]:
             helper_parts.append(field["hint"])
 
-        helper_text = " | ".join(helper_parts) if helper_parts else field["technical_name"]
-        helper = tk.Label(
-            row,
+        helper_text = " · ".join(helper_parts) if helper_parts else field["technical_name"]
+        helper = ctk.CTkLabel(
+            card,
             text=helper_text,
-            bg=COLORS["surface"],
-            fg=COLORS["muted"],
-            font=("Segoe UI", 9),
+            text_color=COLORS["muted"],
+            font=("Segoe UI", 10),
             anchor="w",
             justify="left",
             wraplength=610,
         )
-        helper.grid(row=2, column=1, sticky="ew", pady=(5, 0))
-
-        entry.bind("<FocusIn>", lambda _event, item=entry: self._focus_entry(item))
-        entry.bind("<FocusOut>", lambda _event, item=entry: self._blur_entry(item))
-        self._bind_mousewheel(row)
-        self._bind_mousewheel(entry)
+        helper.grid(row=2, column=1, sticky="ew", padx=(0, 16), pady=(6, 16))
 
         self.entries[field["technical_name"]] = entry
 
         if index == 0:
             entry.focus_set()
-
-    def _focus_entry(self, entry):
-        entry.configure(highlightbackground=COLORS["accent"])
-
-    def _blur_entry(self, entry):
-        entry.configure(highlightbackground=COLORS["border"])
 
     def reload_fields(self):
         self._load_fields()
@@ -448,17 +383,14 @@ class ContractGeneratorApp(tk.Tk):
         self.status_var.set(text)
 
         if error:
-            self.status_label.configure(bg="#fef3f2", fg=COLORS["danger"])
+            self.status_label.configure(text_color=COLORS["danger"])
             return
 
         if success:
-            self.status_label.configure(
-                bg=COLORS["success_soft"],
-                fg=COLORS["success_text"],
-            )
+            self.status_label.configure(text_color=COLORS["success"])
             return
 
-        self.status_label.configure(bg=COLORS["surface_alt"], fg=COLORS["muted"])
+        self.status_label.configure(text_color=COLORS["muted"])
 
 
 if __name__ == "__main__":
