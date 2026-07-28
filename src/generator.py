@@ -1,6 +1,9 @@
 from datetime import date, datetime
 from pathlib import Path
+import os
+import platform
 import re
+import subprocess
 import sys
 
 from docxtpl import DocxTemplate
@@ -8,7 +11,18 @@ from openpyxl import load_workbook
 
 
 # Projektordner unabhängig vom aktuellen Speicherort bestimmen
-PROJECT_DIR = Path(__file__).resolve().parent.parent
+def get_project_dir():
+    """
+    Determines the folder that contains input/, templates/ and output/.
+    In a PyInstaller build this is the folder next to the executable.
+    """
+    if getattr(sys, "frozen", False):
+        return Path(sys.executable).resolve().parent
+
+    return Path(__file__).resolve().parent.parent
+
+
+PROJECT_DIR = get_project_dir()
 
 EXCEL_FILE = PROJECT_DIR / "input" / "Contract_Generator.xlsx"
 TEMPLATE_FILE = PROJECT_DIR / "templates" / "Rahmenvertrag_Template.docx"
@@ -76,7 +90,24 @@ def sanitize_filename(filename):
     return filename or "Rahmenvertrag_generiert"
 
 
-def generate_contract():
+def open_folder(folder_path):
+    """
+    Opens a folder in the user's file browser.
+    """
+    folder_path = Path(folder_path)
+
+    if platform.system() == "Windows":
+        os.startfile(folder_path)
+        return
+
+    if platform.system() == "Darwin":
+        subprocess.run(["open", str(folder_path)], check=False)
+        return
+
+    subprocess.run(["xdg-open", str(folder_path)], check=False)
+
+
+def generate_contract(open_output=False):
     if not EXCEL_FILE.exists():
         raise FileNotFoundError(
             f"Excel-Datei nicht gefunden:\n{EXCEL_FILE}"
@@ -112,10 +143,15 @@ def generate_contract():
     print("\nVertrag erfolgreich erstellt:")
     print(output_file)
 
+    if open_output:
+        open_folder(OUTPUT_DIR)
+
+    return output_file, contract_data
+
 
 def main():
     try:
-        generate_contract()
+        generate_contract(open_output=True)
     except Exception as error:
         print("\nFEHLER BEI DER VERTRAGSERSTELLUNG")
         print("----------------------------------")

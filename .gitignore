@@ -1,4 +1,8 @@
 output/
+build/
+dist/
+release/
+*.spec
 __pycache__/
 *.pyc
 .DS_Store
