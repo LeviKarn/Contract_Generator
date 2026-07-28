@@ -80,6 +80,44 @@ def read_contract_data():
     return contract_data
 
 
+def read_field_definitions():
+    """
+    Reads the field setup from Excel so the app can build its form dynamically.
+    """
+    workbook = load_workbook(EXCEL_FILE, data_only=True)
+
+    if SHEET_NAME not in workbook.sheetnames:
+        raise ValueError(
+            f"Das Tabellenblatt '{SHEET_NAME}' wurde nicht gefunden."
+        )
+
+    worksheet = workbook[SHEET_NAME]
+    field_definitions = []
+
+    for row in range(2, worksheet.max_row + 1):
+        technical_field_name = worksheet.cell(row=row, column=4).value
+
+        if technical_field_name is None:
+            continue
+
+        technical_field_name = str(technical_field_name).strip()
+
+        if not technical_field_name:
+            continue
+
+        field_definitions.append(
+            {
+                "label": format_excel_value(worksheet.cell(row=row, column=1).value),
+                "default": format_excel_value(worksheet.cell(row=row, column=2).value),
+                "example": format_excel_value(worksheet.cell(row=row, column=3).value),
+                "technical_name": technical_field_name,
+                "hint": format_excel_value(worksheet.cell(row=row, column=5).value),
+            }
+        )
+
+    return field_definitions
+
+
 def sanitize_filename(filename):
     """
     Entfernt Zeichen, die unter Windows oder macOS nicht in
@@ -121,6 +159,16 @@ def generate_contract(open_output=False):
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
     contract_data = read_contract_data()
+    return render_contract(contract_data, open_output=open_output)
+
+
+def render_contract(contract_data, open_output=False):
+    if not TEMPLATE_FILE.exists():
+        raise FileNotFoundError(
+            f"Word-Template nicht gefunden:\n{TEMPLATE_FILE}"
+        )
+
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
     print("\nEingelesene Vertragsdaten:")
     for field_name, value in contract_data.items():
