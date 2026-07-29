@@ -58,7 +58,7 @@ class ContractGeneratorApp(ctk.CTk):
         ctk.set_default_color_theme("blue")
 
         self.title(APP_TITLE)
-        self.geometry("860x790")
+        self.geometry("960x760")
         self.minsize(720, 620)
         self.configure(fg_color=COLORS["bg"])
 
@@ -94,15 +94,6 @@ class ContractGeneratorApp(ctk.CTk):
         )
         title.grid(row=0, column=0, sticky="ew")
 
-        subtitle = ctk.CTkLabel(
-            header,
-            text="Dokumenttyp waehlen, Daten erfassen und die fertige Datei im Output-Ordner abholen.",
-            text_color=COLORS["muted"],
-            font=("Segoe UI", 13),
-            anchor="w",
-        )
-        subtitle.grid(row=1, column=0, sticky="ew", pady=(4, 0))
-
         badge = ctk.CTkLabel(
             header,
             text="encentive",
@@ -113,7 +104,7 @@ class ContractGeneratorApp(ctk.CTk):
             padx=14,
             pady=7,
         )
-        badge.grid(row=0, column=1, rowspan=2, sticky="e")
+        badge.grid(row=0, column=1, sticky="e")
 
     def _build_document_area(self):
         shell = ctk.CTkFrame(self, fg_color="transparent")
@@ -211,16 +202,16 @@ class ContractGeneratorApp(ctk.CTk):
             command=self.generate_current_document,
             height=50,
             corner_radius=16,
-            fg_color=COLORS["dark"],
-            hover_color=COLORS["dark_hover"],
-            text_color="#ffffff",
+            fg_color=COLORS["yellow"],
+            hover_color=COLORS["yellow_hover"],
+            text_color=COLORS["text"],
             font=("Segoe UI", 13, "bold"),
         )
         self.primary_button.grid(row=0, column=0, sticky="ew", padx=(0, 10))
 
         output_button = ctk.CTkButton(
             footer,
-            text="Output oeffnen",
+            text="Output öffnen",
             command=self.open_output,
             height=50,
             corner_radius=16,
@@ -302,6 +293,9 @@ class ContractGeneratorApp(ctk.CTk):
             empty.grid(row=0, column=0, sticky="ew", pady=24)
             return
 
+        for index in range(2):
+            form_frame.grid_columnconfigure(index, weight=1, uniform="fields")
+
         for index, field in enumerate(fields):
             self._render_field(form_frame, document_type, index, field)
 
@@ -313,7 +307,15 @@ class ContractGeneratorApp(ctk.CTk):
             border_width=1,
             border_color=COLORS["line"],
         )
-        card.grid(row=index, column=0, sticky="ew", padx=10, pady=(0, 12))
+        row_index = index // 2
+        column_index = index % 2
+        card.grid(
+            row=row_index,
+            column=column_index,
+            sticky="nsew",
+            padx=(10, 6) if column_index == 0 else (6, 10),
+            pady=(0, 10),
+        )
         card.grid_columnconfigure(0, weight=1)
 
         label_text = field["label"] or field["technical_name"]
@@ -324,11 +326,11 @@ class ContractGeneratorApp(ctk.CTk):
             font=("Segoe UI", 13, "bold"),
             anchor="w",
         )
-        label.grid(row=0, column=0, sticky="ew", padx=16, pady=(14, 0))
+        label.grid(row=0, column=0, sticky="ew", padx=14, pady=(10, 0))
 
         entry = ctk.CTkEntry(
             card,
-            height=42,
+            height=36,
             corner_radius=12,
             fg_color=COLORS["input"],
             border_color=COLORS["line_strong"],
@@ -337,7 +339,7 @@ class ContractGeneratorApp(ctk.CTk):
             placeholder_text_color=COLORS["muted"],
             font=("Segoe UI", 13),
         )
-        entry.grid(row=1, column=0, sticky="ew", padx=16, pady=(8, 0))
+        entry.grid(row=1, column=0, sticky="ew", padx=14, pady=(6, 0))
         entry.insert(0, field["default"])
 
         helper_parts = []
@@ -351,12 +353,12 @@ class ContractGeneratorApp(ctk.CTk):
             card,
             text=helper_text,
             text_color=COLORS["muted"],
-            font=("Segoe UI", 10),
+            font=("Segoe UI", 9),
             anchor="w",
             justify="left",
-            wraplength=660,
+            wraplength=390,
         )
-        helper.grid(row=2, column=0, sticky="ew", padx=16, pady=(6, 16))
+        helper.grid(row=2, column=0, sticky="ew", padx=14, pady=(4, 10))
 
         self.entries_by_document[document_type][field["technical_name"]] = entry
 
