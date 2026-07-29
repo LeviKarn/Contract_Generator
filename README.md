@@ -4,6 +4,7 @@
 
 - `input/Contract_Generator.xlsx` - Excel-Eingabemaske
 - `templates/Rahmenvertrag [aktuelle Version].docx` - Word-Template mit `{{ ... }}`-Platzhaltern
+- `templates/Orderform_2026 [aktuelle Version_Juli].docx` - Word-Template fuer Order Forms
 - `output/` - hier werden die erzeugten Vertraege gespeichert
 - `src/generator.py` - Python-Logik des Generators
 - `src/app.py` - kleine Desktop-Oberflaeche
@@ -17,7 +18,7 @@ Die fertige Windows-App liegt nach dem Build unter:
 
 `dist/Contract_Generator/Contract_Generator.exe`
 
-Der komplette Ordner `dist/Contract_Generator/` kann geteilt werden. Nutzer muessen kein Python installieren. Sie starten `Contract_Generator.exe`, tragen die Vertragsdaten direkt im Tool ein und finden den erzeugten Vertrag anschliessend im Ordner `output/`.
+Der komplette Ordner `dist/Contract_Generator/` kann geteilt werden. Nutzer muessen kein Python installieren. Sie starten `Contract_Generator.exe`, waehlen den Reiter `Rahmenvertrag` oder `Order Form`, tragen die Vertragsdaten direkt im Tool ein und finden das erzeugte Dokument anschliessend im Ordner `output/`.
 
 Die Excel-Datei im Ordner `input/` dient nur noch als Felddefinition fuer das Tool:
 
@@ -30,12 +31,13 @@ Die Excel-Datei im Ordner `input/` dient nur noch als Felddefinition fuer das To
 ## Logik
 
 1. Felddefinitionen aus `input/Contract_Generator.xlsx` einlesen.
-2. Eingabeformular in der App dynamisch erzeugen.
-3. Formularwerte anhand der technischen Feldnamen zuordnen.
-4. Word-Template aus `templates/` befuellen.
-5. Ergebnis als DOCX in `output/` speichern.
-6. Dateiname aus der Rahmenvertragsnummer bilden.
-7. Output-Ordner automatisch oeffnen.
+2. Platzhalter aus dem jeweiligen Word-Template erkennen.
+3. Je Dokumenttyp ein passendes Eingabeformular in der App erzeugen.
+4. Formularwerte anhand der technischen Feldnamen zuordnen.
+5. Word-Template aus `templates/` befuellen.
+6. Ergebnis als DOCX in `output/` speichern.
+7. Dateiname aus Rahmenvertragsnummer oder Order-Form-Nummer bilden.
+8. Output-Ordner automatisch oeffnen.
 
 Pflichtfeldpruefungen sind fuer die erste Version nicht vorgesehen.
 

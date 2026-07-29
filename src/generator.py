@@ -5,6 +5,7 @@ import platform
 import re
 import subprocess
 import sys
+from zipfile import ZipFile
 
 from docxtpl import DocxTemplate
 from openpyxl import load_workbook
@@ -25,10 +26,28 @@ def get_project_dir():
 PROJECT_DIR = get_project_dir()
 
 EXCEL_FILE = PROJECT_DIR / "input" / "Contract_Generator.xlsx"
-TEMPLATE_FILE = PROJECT_DIR / "templates" / "Rahmenvertrag [aktuelle Version].docx"
 OUTPUT_DIR = PROJECT_DIR / "output"
 
 SHEET_NAME = "Vertragsdaten"
+
+DOCUMENT_TYPES = {
+    "rahmenvertrag": {
+        "label": "Rahmenvertrag",
+        "template": PROJECT_DIR / "templates" / "Rahmenvertrag [aktuelle Version].docx",
+        "number_field": "rahmenvertragsnummer",
+        "filename_suffix": "Rahmenvertrag",
+        "fallback_filename": "Rahmenvertrag_generiert",
+    },
+    "order_form": {
+        "label": "Order Form",
+        "template": PROJECT_DIR / "templates" / "Orderform_2026 [aktuelle Version_Juli].docx",
+        "number_field": "order_form_nummer",
+        "filename_suffix": "Order_Form",
+        "fallback_filename": "Order_Form_generiert",
+    },
+}
+
+TEMPLATE_FILE = DOCUMENT_TYPES["rahmenvertrag"]["template"]
 
 
 def format_excel_value(value):
@@ -118,6 +137,53 @@ def read_field_definitions():
     return field_definitions
 
 
+def get_document_type(document_type):
+    if document_type not in DOCUMENT_TYPES:
+        known_types = ", ".join(DOCUMENT_TYPES)
+        raise ValueError(
+            f"Unbekannter Dokumenttyp '{document_type}'. Erwartet: {known_types}"
+        )
+
+    return DOCUMENT_TYPES[document_type]
+
+
+def extract_template_placeholders(template_file):
+    """
+    Reads placeholders from a docx template.
+    """
+    if not template_file.exists():
+        raise FileNotFoundError(
+            f"Word-Template nicht gefunden:\n{template_file}"
+        )
+
+    xml_parts = []
+
+    with ZipFile(template_file) as archive:
+        for name in archive.namelist():
+            if name.startswith("word/") and name.endswith(".xml"):
+                xml_parts.append(archive.read(name).decode("utf-8", errors="ignore"))
+
+    xml_text = "".join(xml_parts)
+    plain_text = re.sub(r"<[^>]+>", "", xml_text)
+
+    return sorted(
+        set(re.findall(r"\{\{\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*\}\}", plain_text))
+    )
+
+
+def get_fields_for_document(document_type):
+    wanted_placeholders = set(
+        extract_template_placeholders(get_document_type(document_type)["template"])
+    )
+    all_fields = read_field_definitions()
+
+    return [
+        field
+        for field in all_fields
+        if field["technical_name"] in wanted_placeholders
+    ]
+
+
 def sanitize_filename(filename):
     """
     Entfernt Zeichen, die unter Windows oder macOS nicht in
@@ -145,27 +211,31 @@ def open_folder(folder_path):
     subprocess.run(["xdg-open", str(folder_path)], check=False)
 
 
-def generate_contract(open_output=False):
+def generate_contract(open_output=False, document_type="rahmenvertrag"):
     if not EXCEL_FILE.exists():
         raise FileNotFoundError(
             f"Excel-Datei nicht gefunden:\n{EXCEL_FILE}"
         )
 
-    if not TEMPLATE_FILE.exists():
-        raise FileNotFoundError(
-            f"Word-Template nicht gefunden:\n{TEMPLATE_FILE}"
-        )
+    document_config = get_document_type(document_type)
 
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
     contract_data = read_contract_data()
-    return render_contract(contract_data, open_output=open_output)
+    return render_contract(
+        contract_data,
+        open_output=open_output,
+        document_type=document_type,
+    )
 
 
-def render_contract(contract_data, open_output=False):
-    if not TEMPLATE_FILE.exists():
+def render_contract(contract_data, open_output=False, document_type="rahmenvertrag"):
+    document_config = get_document_type(document_type)
+    template_file = document_config["template"]
+
+    if not template_file.exists():
         raise FileNotFoundError(
-            f"Word-Template nicht gefunden:\n{TEMPLATE_FILE}"
+            f"Word-Template nicht gefunden:\n{template_file}"
         )
 
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -175,14 +245,14 @@ def render_contract(contract_data, open_output=False):
         displayed_value = value if value else "[leer]"
         print(f"  {field_name}: {displayed_value}")
 
-    document = DocxTemplate(TEMPLATE_FILE)
+    document = DocxTemplate(template_file)
     document.render(contract_data)
 
-    contract_number = contract_data.get("rahmenvertragsnummer", "")
+    contract_number = contract_data.get(document_config["number_field"], "")
     output_name = sanitize_filename(
-        f"{contract_number}_Rahmenvertrag"
+        f"{contract_number}_{document_config['filename_suffix']}"
         if contract_number
-        else "Rahmenvertrag_generiert"
+        else document_config["fallback_filename"]
     )
 
     output_file = OUTPUT_DIR / f"{output_name}.docx"

@@ -7,7 +7,7 @@ from tkinter import messagebox
 
 import customtkinter as ctk
 
-from generator import OUTPUT_DIR, open_folder, read_field_definitions, render_contract
+from generator import DOCUMENT_TYPES, OUTPUT_DIR, get_fields_for_document, open_folder, render_contract
 
 
 APP_TITLE = "Contract Generator"
@@ -59,8 +59,10 @@ class ContractGeneratorApp(ctk.CTk):
         self.configure(fg_color=COLORS["bg"])
 
         self.status_var = tk.StringVar(value="Bereit.")
-        self.fields = []
-        self.entries = {}
+        self.fields_by_document = {}
+        self.entries_by_document = {}
+        self.form_frames = {}
+        self.tab_labels = {}
 
         self._build_ui()
         self._load_fields()
@@ -70,7 +72,7 @@ class ContractGeneratorApp(ctk.CTk):
         self.grid_rowconfigure(1, weight=1)
 
         self._build_header()
-        self._build_form_panel()
+        self._build_document_tabs()
         self._build_footer()
 
     def _build_header(self):
@@ -112,7 +114,7 @@ class ContractGeneratorApp(ctk.CTk):
         )
         badge.grid(row=0, column=1, sticky="e")
 
-    def _build_form_panel(self):
+    def _build_document_tabs(self):
         shell = ctk.CTkFrame(self, fg_color="transparent")
         shell.grid(row=1, column=0, sticky="nsew", padx=34)
         shell.grid_columnconfigure(0, weight=1)
@@ -135,34 +137,44 @@ class ContractGeneratorApp(ctk.CTk):
 
         panel_title = ctk.CTkLabel(
             panel_header,
-            text="Vertragsdaten",
+            text="Dokument auswählen",
             text_color=COLORS["text"],
             font=("Segoe UI", 16, "bold"),
             anchor="w",
         )
         panel_title.grid(row=0, column=0, sticky="ew")
 
-        self.field_count_label = ctk.CTkLabel(
-            panel_header,
-            text="",
-            text_color=COLORS["yellow"],
-            fg_color=COLORS["input"],
-            corner_radius=999,
-            font=("Segoe UI", 11, "bold"),
-            padx=12,
-            pady=6,
-        )
-        self.field_count_label.grid(row=0, column=1, sticky="e")
-
-        self.form_frame = ctk.CTkScrollableFrame(
+        tabview = ctk.CTkTabview(
             panel,
             fg_color="transparent",
-            scrollbar_button_color="#343741",
-            scrollbar_button_hover_color=COLORS["yellow"],
-            corner_radius=0,
+            segmented_button_fg_color=COLORS["input"],
+            segmented_button_selected_color=COLORS["yellow"],
+            segmented_button_selected_hover_color=COLORS["yellow_hover"],
+            segmented_button_unselected_color=COLORS["input"],
+            segmented_button_unselected_hover_color=COLORS["panel_alt"],
+            text_color="#111111",
+            command=self._on_tab_change,
         )
-        self.form_frame.grid(row=1, column=0, sticky="nsew", padx=10, pady=(0, 14))
-        self.form_frame.grid_columnconfigure(0, weight=1)
+        tabview.grid(row=1, column=0, sticky="nsew", padx=14, pady=(0, 14))
+        self.tabview = tabview
+
+        for document_type, config in DOCUMENT_TYPES.items():
+            tab_label = config["label"]
+            self.tab_labels[tab_label] = document_type
+            tab = tabview.add(tab_label)
+            tab.grid_columnconfigure(0, weight=1)
+            tab.grid_rowconfigure(0, weight=1)
+
+            form_frame = ctk.CTkScrollableFrame(
+                tab,
+                fg_color="transparent",
+                scrollbar_button_color="#343741",
+                scrollbar_button_hover_color=COLORS["yellow"],
+                corner_radius=0,
+            )
+            form_frame.grid(row=0, column=0, sticky="nsew", padx=0, pady=(10, 0))
+            form_frame.grid_columnconfigure(0, weight=1)
+            self.form_frames[document_type] = form_frame
 
     def _build_footer(self):
         footer = ctk.CTkFrame(self, fg_color="transparent")
@@ -173,8 +185,8 @@ class ContractGeneratorApp(ctk.CTk):
 
         primary = ctk.CTkButton(
             footer,
-            text="Vertrag erzeugen",
-            command=self.generate_from_form,
+            text="Dokument erzeugen",
+            command=self.generate_current_document,
             height=48,
             corner_radius=18,
             fg_color=COLORS["yellow"],
@@ -232,39 +244,46 @@ class ContractGeneratorApp(ctk.CTk):
         self.status_label.grid(row=0, column=0, sticky="ew")
 
     def _load_fields(self):
-        try:
-            self.fields = read_field_definitions()
-        except Exception as error:
-            self._set_status("Felder konnten nicht geladen werden.", error=True)
-            messagebox.showerror(APP_TITLE, str(error))
-            return
+        loaded_count = 0
 
-        self._render_fields()
-        self.field_count_label.configure(text=f"{len(self.fields)} Felder")
-        self._set_status(f"{len(self.fields)} Felder geladen.")
+        for document_type in DOCUMENT_TYPES:
+            try:
+                self.fields_by_document[document_type] = get_fields_for_document(document_type)
+            except Exception as error:
+                self._set_status("Felder konnten nicht geladen werden.", error=True)
+                messagebox.showerror(APP_TITLE, str(error))
+                return
 
-    def _render_fields(self):
-        for child in self.form_frame.winfo_children():
+            loaded_count += len(self.fields_by_document[document_type])
+            self._render_fields(document_type)
+
+        self._set_status(f"Felder geladen: {self._current_document_label()}.")
+
+    def _render_fields(self, document_type):
+        form_frame = self.form_frames[document_type]
+
+        for child in form_frame.winfo_children():
             child.destroy()
 
-        self.entries = {}
+        self.entries_by_document[document_type] = {}
+        fields = self.fields_by_document[document_type]
 
-        if not self.fields:
+        if not fields:
             empty = ctk.CTkLabel(
-                self.form_frame,
-                text="Keine Felder gefunden.",
+                form_frame,
+                text="Keine passenden Platzhalter im Template gefunden.",
                 text_color=COLORS["muted"],
                 font=("Segoe UI", 12),
             )
             empty.grid(row=0, column=0, sticky="ew", pady=24)
             return
 
-        for index, field in enumerate(self.fields):
-            self._render_field(index, field)
+        for index, field in enumerate(fields):
+            self._render_field(form_frame, document_type, index, field)
 
-    def _render_field(self, index, field):
+    def _render_field(self, parent, document_type, index, field):
         card = ctk.CTkFrame(
-            self.form_frame,
+            parent,
             fg_color=COLORS["panel_alt"],
             corner_radius=20,
             border_width=1,
@@ -315,7 +334,7 @@ class ContractGeneratorApp(ctk.CTk):
         )
         helper.grid(row=2, column=0, sticky="ew", padx=16, pady=(6, 16))
 
-        self.entries[field["technical_name"]] = entry
+        self.entries_by_document[document_type][field["technical_name"]] = entry
 
         if index == 0:
             entry.focus_set()
@@ -323,22 +342,37 @@ class ContractGeneratorApp(ctk.CTk):
     def reload_fields(self):
         self._load_fields()
 
-    def collect_contract_data(self):
+    def _current_document_type(self):
+        return self.tab_labels[self.tabview.get()]
+
+    def _current_document_label(self):
+        return DOCUMENT_TYPES[self._current_document_type()]["label"]
+
+    def _on_tab_change(self):
+        document_type = self._current_document_type()
+        field_count = len(self.fields_by_document.get(document_type, []))
+        self._set_status(f"{DOCUMENT_TYPES[document_type]['label']}: {field_count} Felder bereit.")
+
+    def collect_contract_data(self, document_type):
         return {
             technical_name: entry.get().strip()
-            for technical_name, entry in self.entries.items()
+            for technical_name, entry in self.entries_by_document[document_type].items()
         }
 
-    def generate_from_form(self):
+    def generate_current_document(self):
+        document_type = self._current_document_type()
+        document_label = DOCUMENT_TYPES[document_type]["label"]
+
         try:
-            self._set_status("Vertrag wird erzeugt ...")
+            self._set_status(f"{document_label} wird erzeugt ...")
             self.update_idletasks()
             output_file, _ = render_contract(
-                self.collect_contract_data(),
+                self.collect_contract_data(document_type),
                 open_output=True,
+                document_type=document_type,
             )
         except Exception as error:
-            self._set_status("Fehler bei der Vertragserstellung.", error=True)
+            self._set_status("Fehler bei der Dokumenterstellung.", error=True)
             messagebox.showerror(APP_TITLE, str(error))
             return
 
