@@ -3,7 +3,7 @@
 ## Ordnerstruktur
 
 - `input/Contract_Generator.xlsx` - Excel-Eingabemaske
-- `templates/Rahmenvertrag_Template.docx` - Word-Template mit `{{ ... }}`-Platzhaltern
+- `templates/Rahmenvertrag [aktuelle Version].docx` - Word-Template mit `{{ ... }}`-Platzhaltern
 - `output/` - hier werden die erzeugten Vertraege gespeichert
 - `src/generator.py` - Python-Logik des Generators
 - `src/app.py` - kleine Desktop-Oberflaeche

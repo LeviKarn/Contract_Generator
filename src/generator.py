@@ -25,7 +25,7 @@ def get_project_dir():
 PROJECT_DIR = get_project_dir()
 
 EXCEL_FILE = PROJECT_DIR / "input" / "Contract_Generator.xlsx"
-TEMPLATE_FILE = PROJECT_DIR / "templates" / "Rahmenvertrag_Template.docx"
+TEMPLATE_FILE = PROJECT_DIR / "templates" / "Rahmenvertrag [aktuelle Version].docx"
 OUTPUT_DIR = PROJECT_DIR / "output"
 
 SHEET_NAME = "Vertragsdaten"
