@@ -20,6 +20,8 @@ Die fertige Windows-App liegt nach dem Build unter:
 
 Der komplette Ordner `dist/Contract_Generator/` kann geteilt werden. Nutzer muessen kein Python installieren. Sie starten `Contract_Generator.exe`, waehlen den Reiter `Rahmenvertrag` oder `Order Form`, tragen die Vertragsdaten direkt im Tool ein und finden das erzeugte Dokument anschliessend im Ordner `output/`.
 
+Der `output/`-Ordner ist nur ein temporärer Ablageort. Vor jedem neuen Dokument werden alte `.docx`-Dateien aus `output/` automatisch gelöscht. Erzeugte Dokumente sollten daher direkt in den passenden Kunden- oder Deal-Ordner kopiert werden.
+
 Die Excel-Datei im Ordner `input/` dient nur noch als Felddefinition fuer das Tool:
 
 - Spalte A: sichtbare Feldbezeichnung

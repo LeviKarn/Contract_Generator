@@ -419,7 +419,13 @@ class ContractGeneratorApp(ctk.CTk):
             return
 
         self._set_status(f"Erstellt: {output_file.name}", success=True)
-        messagebox.showinfo(APP_TITLE, f"Dokument erfolgreich erstellt:\n{output_file}")
+        messagebox.showinfo(
+            APP_TITLE,
+            "Dokument erfolgreich erstellt.\n\n"
+            "Bitte kopiere die Datei jetzt in den passenden Kunden- oder Deal-Ordner.\n"
+            "Der Output-Ordner wird beim nächsten Erzeugen automatisch geleert.\n\n"
+            f"Datei:\n{output_file}",
+        )
 
     def open_output(self):
         OUTPUT_DIR.mkdir(parents=True, exist_ok=True)

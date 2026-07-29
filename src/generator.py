@@ -211,6 +211,16 @@ def open_folder(folder_path):
     subprocess.run(["xdg-open", str(folder_path)], check=False)
 
 
+def clear_output_folder():
+    """
+    Removes generated Word files from the output folder before a new document is created.
+    """
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+
+    for output_file in OUTPUT_DIR.glob("*.docx"):
+        output_file.unlink()
+
+
 def generate_contract(open_output=False, document_type="rahmenvertrag"):
     if not EXCEL_FILE.exists():
         raise FileNotFoundError(
@@ -229,7 +239,12 @@ def generate_contract(open_output=False, document_type="rahmenvertrag"):
     )
 
 
-def render_contract(contract_data, open_output=False, document_type="rahmenvertrag"):
+def render_contract(
+    contract_data,
+    open_output=False,
+    document_type="rahmenvertrag",
+    clear_output=True,
+):
     document_config = get_document_type(document_type)
     template_file = document_config["template"]
 
@@ -238,7 +253,10 @@ def render_contract(contract_data, open_output=False, document_type="rahmenvertr
             f"Word-Template nicht gefunden:\n{template_file}"
         )
 
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    if clear_output:
+        clear_output_folder()
+    else:
+        OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
     print("\nEingelesene Vertragsdaten:")
     for field_name, value in contract_data.items():
