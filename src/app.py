@@ -58,7 +58,7 @@ class ContractGeneratorApp(ctk.CTk):
         ctk.set_default_color_theme("blue")
 
         self.title(APP_TITLE)
-        self.geometry("960x760")
+        self.geometry("860x760")
         self.minsize(720, 620)
         self.configure(fg_color=COLORS["bg"])
 
@@ -293,8 +293,7 @@ class ContractGeneratorApp(ctk.CTk):
             empty.grid(row=0, column=0, sticky="ew", pady=24)
             return
 
-        for index in range(2):
-            form_frame.grid_columnconfigure(index, weight=1, uniform="fields")
+        form_frame.grid_columnconfigure(0, weight=1)
 
         for index, field in enumerate(fields):
             self._render_field(form_frame, document_type, index, field)
@@ -307,15 +306,7 @@ class ContractGeneratorApp(ctk.CTk):
             border_width=1,
             border_color=COLORS["line"],
         )
-        row_index = index // 2
-        column_index = index % 2
-        card.grid(
-            row=row_index,
-            column=column_index,
-            sticky="nsew",
-            padx=(10, 6) if column_index == 0 else (6, 10),
-            pady=(0, 10),
-        )
+        card.grid(row=index, column=0, sticky="ew", padx=10, pady=(0, 10))
         card.grid_columnconfigure(0, weight=1)
 
         label_text = field["label"] or field["technical_name"]
@@ -356,7 +347,7 @@ class ContractGeneratorApp(ctk.CTk):
             font=("Segoe UI", 9),
             anchor="w",
             justify="left",
-            wraplength=390,
+            wraplength=660,
         )
         helper.grid(row=2, column=0, sticky="ew", padx=14, pady=(4, 10))
 
