@@ -9,6 +9,7 @@
 - `src/generator.py` - Python-Logik des Generators
 - `src/app.py` - kleine Desktop-Oberflaeche
 - `build_windows.bat` - baut die Windows-App
+- `Install_Contract_Generator.bat` - installiert die Windows-App lokal und erstellt eine Desktop-Verknuepfung
 - `start_windows.bat` - Start per Doppelklick waehrend der Entwicklung
 - `start_mac.command` - Start per Doppelklick unter macOS waehrend der Entwicklung
 
@@ -21,6 +22,17 @@ Die fertige Windows-App liegt nach dem Build unter:
 Der komplette Ordner `dist/Contract_Generator/` kann geteilt werden. Nutzer muessen kein Python installieren. Sie starten `Contract_Generator.exe`, waehlen den Reiter `Rahmenvertrag` oder `Order Form`, tragen die Vertragsdaten direkt im Tool ein und finden das erzeugte Dokument anschliessend im Ordner `output/`.
 
 Der `output/`-Ordner ist nur ein temporärer Ablageort. Vor jedem neuen Dokument werden alte `.docx`-Dateien aus `output/` automatisch gelöscht. Erzeugte Dokumente sollten daher direkt in den passenden Kunden- oder Deal-Ordner kopiert werden.
+
+## Windows-Installer fuer Kollegen
+
+Lege diese beiden Dateien gemeinsam in SharePoint oder OneDrive ab:
+
+- `Install_Contract_Generator.bat`
+- `Contract_Generator_Windows.zip`
+
+Kollegen starten per Doppelklick `Install_Contract_Generator.bat`. Der Installer entpackt die App nach `%LOCALAPPDATA%\Contract_Generator` und erstellt eine Desktop-Verknuepfung `Contract_Generator`.
+
+Die App sollte lokal installiert genutzt werden, nicht direkt gemeinsam aus dem SharePoint-Ordner. So hat jeder Nutzer einen eigenen `output/`-Ordner und es gibt keine Sync-Konflikte.
 
 Die Excel-Datei im Ordner `input/` dient nur noch als Felddefinition fuer das Tool:
 
